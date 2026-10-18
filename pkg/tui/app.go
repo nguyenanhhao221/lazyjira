@@ -70,6 +70,7 @@ type editCtx struct {
 	commentID      string
 	fieldID        string
 	fieldIndex     int
+	numeric        bool
 	converterState any
 }
 
@@ -978,6 +979,11 @@ func (a *App) fetchCustomFieldOptionsForEdit(sel *jira.Issue, field *views.InfoF
 	}
 	multiline := a.fieldMultilineEnabled(field.FieldID)
 	cfgType := a.configuredFieldType(field.FieldID)
+	if cfgType == schemaNumber {
+		a.inputModal.Show("Edit "+field.Name, views.EditValueForInput(field.Value))
+		a.editContext = editCtx{kind: editField, issueKey: sel.Key, fieldID: field.FieldID, numeric: true}
+		return a, nil
+	}
 	if cfgType == "text" || cfgType == "textarea" {
 		if multiline || cfgType == "textarea" {
 			a.editContext = editCtx{kind: editFieldText, issueKey: sel.Key, fieldID: field.FieldID}
@@ -1040,12 +1046,13 @@ func (a *App) handleCustomFieldOptions(msg customFieldOptionsMsg) (tea.Model, te
 	}
 
 	if len(items) == 0 {
-		if msg.useEditor {
+		numeric := msg.schemaType == schemaNumber
+		if msg.useEditor && !numeric {
 			a.editContext = editCtx{kind: editFieldText, issueKey: msg.issueKey, fieldID: msg.fieldID}
 			return a, launchEditor(views.EditValueForInput(msg.currentValue), ".md")
 		}
 		a.inputModal.Show("Edit "+msg.fieldName, views.EditValueForInput(msg.currentValue))
-		a.editContext = editCtx{kind: editField, issueKey: msg.issueKey, fieldID: msg.fieldID}
+		a.editContext = editCtx{kind: editField, issueKey: msg.issueKey, fieldID: msg.fieldID, numeric: numeric}
 		return a, nil
 	}
 
