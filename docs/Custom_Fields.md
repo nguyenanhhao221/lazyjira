@@ -45,7 +45,7 @@ You can override the display name with `name`.
 |----------|----------|-------------|
 | `id` | yes | Jira field ID, for example `customfield_10015` |
 | `name` | no | Display name. Falls back to the raw ID if omitted |
-| `type` | no | Force field type: `select`, `multiselect`, `user`, `text`, `textarea`. Default: auto-detect from value |
+| `type` | no | Force field type: `select`, `multiselect`, `user`, `text`, `textarea`, `number`. Default: auto-detect from value |
 | `multiline` | no | Open external editor instead of inline input for text fields. Default: false |
 
 ## Editing
@@ -56,9 +56,12 @@ Press `e` on any field in the info panel to edit it.
 - **multiselect** fields show a checklist
 - **user/person** fields show a user picker
 - **text** fields show an inline input
+- **number** fields show an inline input and send the value as a number (e.g. Story Points)
 - **textarea** or fields with `multiline: true` open your `$EDITOR`
 
-Fields with explicit `type: text` or `type: textarea` skip the CreateMeta API call and go straight to the input.
+Fields with explicit `type: text`, `type: textarea` or `type: number` skip the CreateMeta API call and go straight to the input.
+
+Fields whose Jira schema type is `number` are edited as numbers automatically, so `type: number` is only needed if the field is missing from CreateMeta.
 
 If a field has no predefined options in Jira, it falls back to text input. Fields with `multiline: true` open your `$EDITOR` instead.
 

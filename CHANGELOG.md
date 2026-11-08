@@ -7,6 +7,10 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+### Fixed
+
+- Editing a number custom field such as Story Points failed because the value was sent as a string. Fields whose Jira schema type is `number`, or that are configured with the new `type: number`, now send the value as a JSON number and show an error for non-numeric input
+
 ## [2.19.2] - 2026-07-08
 
 ### Fixed

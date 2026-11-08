@@ -202,6 +202,43 @@ func TestHandleInputConfirmed(t *testing.T) {
 		}
 	})
 
+	t.Run("numeric field sends a number", func(t *testing.T) {
+		t.Parallel()
+		var sent any
+		fake := &jiratest.FakeClient{T: t}
+		fake.UpdateIssueFunc = func(_ context.Context, _ string, fields map[string]any) error {
+			sent = fields["customfield_1"]
+			return nil
+		}
+		app := newAppWithFake(t, fake)
+		app.editContext = editCtx{kind: editField, issueKey: testKey, fieldID: "customfield_1", numeric: true}
+
+		_, cmd := app.handleInputConfirmed(components.InputConfirmedMsg{Text: " 3 "})
+
+		if cmd == nil {
+			t.Fatal("expected update command")
+		}
+		cmd()
+		if sent != 3.0 {
+			t.Errorf("sent %#v, want float64 3", sent)
+		}
+	})
+
+	t.Run("numeric field with non-number surfaces error", func(t *testing.T) {
+		t.Parallel()
+		app := newAppWithFake(t, &jiratest.FakeClient{T: t})
+		app.editContext = editCtx{kind: editField, issueKey: testKey, fieldID: "customfield_1", numeric: true}
+
+		_, cmd := app.handleInputConfirmed(components.InputConfirmedMsg{Text: "three"})
+
+		if cmd == nil {
+			t.Fatal("expected error command")
+		}
+		if _, ok := cmd().(errorMsg); !ok {
+			t.Error("expected errorMsg for non-numeric input")
+		}
+	})
+
 	t.Run("parent field with invalid key surfaces error", func(t *testing.T) {
 		t.Parallel()
 		app := newAppWithFake(t, &jiratest.FakeClient{T: t})

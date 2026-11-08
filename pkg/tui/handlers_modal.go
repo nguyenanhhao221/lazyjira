@@ -34,6 +34,19 @@ func (a *App) applyParentEdit(issueKey, text string) tea.Cmd {
 	return updateIssueField(a.client, issueKey, "parent", map[string]string{"key": text})
 }
 
+// applyNumberEdit sends a numeric field as a JSON number, since Jira rejects
+// numeric strings for number-schema fields.
+func (a *App) applyNumberEdit(issueKey, fieldID, text string) tea.Cmd {
+	n, err := strconv.ParseFloat(text, 64)
+	if err != nil {
+		return func() tea.Msg {
+			return errorMsg{err: fmt.Errorf("invalid number %q", text)}
+		}
+	}
+	a.optimisticFieldUpdate(issueKey, fieldID, n)
+	return updateIssueField(a.client, issueKey, fieldID, n)
+}
+
 // handleModalSelected dispatches modal selection via the onSelect callback
 func (a *App) handleModalSelected(msg components.ModalSelectedMsg) (tea.Model, tea.Cmd) {
 	a.createForm.Resume()
@@ -157,6 +170,9 @@ func (a *App) handleInputConfirmed(msg components.InputConfirmedMsg) (tea.Model,
 	case editField:
 		if ctx.fieldID == "parent" {
 			return a, a.applyParentEdit(ctx.issueKey, strings.TrimSpace(msg.Text))
+		}
+		if ctx.numeric && strings.TrimSpace(msg.Text) != "" {
+			return a, a.applyNumberEdit(ctx.issueKey, ctx.fieldID, strings.TrimSpace(msg.Text))
 		}
 		if msg.Text != "" {
 			a.optimisticFieldUpdate(ctx.issueKey, ctx.fieldID, msg.Text)

@@ -709,8 +709,9 @@ func (a *App) buildCreateFields(meta []jira.CreateMetaField) []components.Create
 }
 
 const (
-	schemaArray = "array"
-	schemaUser  = "user"
+	schemaArray  = "array"
+	schemaUser   = "user"
+	schemaNumber = "number"
 )
 
 // metaToFormField converts one CreateMetaField to CreateFormField

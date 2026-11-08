@@ -261,6 +261,63 @@ func TestHandleCustomFieldOptions_EmptyOptionsShowsInputModal(t *testing.T) {
 	}
 }
 
+func TestHandleCustomFieldOptions_NumberSchemaMarksNumeric(t *testing.T) {
+	t.Parallel()
+	app := newAppWithFake(t, &jiratest.FakeClient{T: t})
+	app.keymap = DefaultKeymap()
+	app.width = 120
+	app.height = 40
+
+	msg := customFieldOptionsMsg{
+		issueKey:   testKey,
+		fieldID:    "customfield_10015",
+		fieldName:  "Story Points",
+		fieldType:  views.FieldSingleText,
+		schemaType: schemaNumber,
+		useEditor:  true,
+	}
+
+	_, _ = app.handleCustomFieldOptions(msg)
+
+	if !app.inputModal.IsVisible() {
+		t.Error("number field should use the inline input, not the editor")
+	}
+	if !app.editContext.numeric {
+		t.Error("editContext should be numeric for number schema")
+	}
+}
+
+func TestFetchCustomFieldOptionsForEdit_NumberTypeMarksNumeric(t *testing.T) {
+	t.Parallel()
+	app := newAppWithFake(t, &jiratest.FakeClient{T: t})
+	app.keymap = DefaultKeymap()
+	app.width = 120
+	app.height = 40
+	app.cfg.Fields = []config.FieldConfig{
+		{ID: "customfield_10015", Name: "Story Points", Type: "number"},
+	}
+
+	issue := &jira.Issue{
+		Key:       testKey,
+		Summary:   testSummary,
+		IssueType: &jira.IssueType{ID: "10000", Name: "Story"},
+	}
+	field := &views.InfoField{
+		FieldID: "customfield_10015",
+		Name:    "Story Points",
+		Type:    views.FieldSingleText,
+	}
+
+	_, cmd := app.fetchCustomFieldOptionsForEdit(issue, field)
+
+	if cmd != nil {
+		t.Error("configured number type should skip the CreateMeta fetch")
+	}
+	if !app.inputModal.IsVisible() || !app.editContext.numeric {
+		t.Error("expected numeric input modal for configured number type")
+	}
+}
+
 func TestHandleCustomFieldOptions_WithOptionsCachesAndShowsModal(t *testing.T) {
 	t.Parallel()
 	app := newAppWithFake(t, &jiratest.FakeClient{T: t})
